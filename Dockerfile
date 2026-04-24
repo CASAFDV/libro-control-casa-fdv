@@ -27,10 +27,6 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV DATABASE_URL=file:/app/data/custom.db
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
-
 # Copy standalone build output
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
@@ -43,13 +39,11 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 
 # Copy startup script
-COPY --chown=nextjs:nodejs docker-start.sh /app/start.sh
+COPY docker-start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
-# Create data directory for SQLite (will be mounted as volume)
-RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data
-
-USER nextjs
+# Create data directory for SQLite
+RUN mkdir -p /app/data
 
 EXPOSE 3000
 
