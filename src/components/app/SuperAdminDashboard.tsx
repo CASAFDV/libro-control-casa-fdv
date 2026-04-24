@@ -10,14 +10,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { ArrowLeft, Users, Plus, Pencil, Trash2, UserPlus, BookOpen, Calendar, Shield, X } from 'lucide-react'
+import { ArrowLeft, Users, Plus, Pencil, Trash2, UserPlus, BookOpen, Calendar, Shield, X, Save, MessageSquare } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { Textarea } from '@/components/ui/textarea'
 
 interface Family { id: string; name: string; color: string; students: { id: string; name: string }[] }
 interface Student { id: string; name: string; familyId: string; family: { id: string; name: string } }
 interface Criteria { id: string; name: string; isActive: boolean; order: number }
 interface AdminUser { id: string; username: string; name: string; role: string; adminCriteria: { criteriaId: string; criteriaName: string }[] }
-interface AcademicYear { id: string; name: string; startDate: string; endDate: string; isActive: boolean; weeks: { id: string; weekNumber: number; label: string }[] }
+interface AcademicYear { id: string; name: string; startDate: string; endDate: string; isActive: boolean; weeks: { id: string; weekNumber: number; label: string; month: string }[] }
+
+interface GradeEntry {
+  studentId: string
+  criteriaId: string
+  weekId: string
+  score: number
+  comment: string
+}
 
 export default function SuperAdminDashboard() {
   const { authToken, setView } = useAppStore()
@@ -52,6 +61,14 @@ export default function SuperAdminDashboard() {
   const [years, setYears] = useState<AcademicYear[]>([])
   const [yearDialog, setYearDialog] = useState<{ open: boolean; mode: 'create' | 'edit'; year?: AcademicYear }>({ open: false, mode: 'create' })
   const [yearForm, setYearForm] = useState({ name: '', startDate: '', endDate: '' })
+
+  // Grades
+  const [gradeYearId, setGradeYearId] = useState<string>('')
+  const [gradeWeekId, setGradeWeekId] = useState<string>('')
+  const [gradeFamilyId, setGradeFamilyId] = useState<string>('')
+  const [grades, setGrades] = useState<Record<string, Record<string, { score: number; comment: string }>>>({})
+  const [generalComments, setGeneralComments] = useState<Record<string, string>>({})
+  const [savingGrades, setSavingGrades] = useState(false)
 
   const loadData = useCallback(async () => {
     try {
@@ -257,6 +274,86 @@ export default function SuperAdminDashboard() {
 
   const activeCriteria = criteria.filter(c => c.isActive)
 
+  // Grade entry: auto-select active year & latest week
+  useEffect(() => {
+    if (years.length > 0 && !gradeYearId) {
+      const activeYear = years.find(y => y.isActive)
+      if (activeYear) {
+        setGradeYearId(activeYear.id)
+        if (activeYear.weeks.length > 0) setGradeWeekId(activeYear.weeks[activeYear.weeks.length - 1].id)
+      }
+    }
+  }, [years])
+
+  // Load existing grades when week/family changes
+  const loadGrades = useCallback(async () => {
+    if (!gradeWeekId || !gradeFamilyId) return
+    try {
+      const [gradesRes, commentsRes] = await Promise.all([
+        fetch(`/api/grades?weekId=${gradeWeekId}`),
+        fetch(`/api/weekly-comments?weekId=${gradeWeekId}`),
+      ])
+      const gradesData = await gradesRes.json()
+      const commentsData = await commentsRes.json()
+      const familyStudents = families.find(f => f.id === gradeFamilyId)?.students || []
+      const newGrades: Record<string, Record<string, { score: number; comment: string }>> = {}
+      const newComments: Record<string, string> = {}
+      for (const student of familyStudents) {
+        newGrades[student.id] = {}
+        for (const c of activeCriteria) {
+          const existing = gradesData.find((g: any) => g.studentId === student.id && g.criteriaId === c.id)
+          newGrades[student.id][c.id] = { score: existing?.score ?? 0, comment: existing?.comment ?? '' }
+        }
+        const existingComment = commentsData.find((c: any) => c.studentId === student.id)
+        newComments[student.id] = existingComment?.comment ?? ''
+      }
+      setGrades(newGrades)
+      setGeneralComments(newComments)
+    } catch (error) { console.error('Error loading grades:', error) }
+  }, [gradeWeekId, gradeFamilyId, families, activeCriteria])
+
+  useEffect(() => { loadGrades() }, [loadGrades])
+
+  const handleScoreChange = (studentId: string, criteriaId: string, score: number) => {
+    setGrades(prev => ({
+      ...prev,
+      [studentId]: { ...prev[studentId], [criteriaId]: { ...prev[studentId]?.[criteriaId], score: Math.min(20, Math.max(0, score)) } },
+    }))
+  }
+
+  const handleCommentChange = (studentId: string, criteriaId: string, comment: string) => {
+    setGrades(prev => ({
+      ...prev,
+      [studentId]: { ...prev[studentId], [criteriaId]: { ...prev[studentId]?.[criteriaId], comment } },
+    }))
+  }
+
+  const handleSaveGrades = async () => {
+    setSavingGrades(true)
+    try {
+      const familyStudents = families.find(f => f.id === gradeFamilyId)?.students || []
+      const gradesToSave: GradeEntry[] = []
+      for (const student of familyStudents) {
+        for (const c of activeCriteria) {
+          const g = grades[student.id]?.[c.id]
+          if (g) gradesToSave.push({ studentId: student.id, criteriaId: c.id, weekId: gradeWeekId, score: g.score, comment: g.comment })
+        }
+        const comment = generalComments[student.id]
+        if (comment !== undefined) {
+          await fetch('/api/weekly-comments', { method: 'POST', headers, body: JSON.stringify({ studentId: student.id, weekId: gradeWeekId, comment }) })
+        }
+      }
+      if (gradesToSave.length > 0) {
+        const res = await fetch('/api/grades', { method: 'POST', headers, body: JSON.stringify({ grades: gradesToSave }) })
+        if (!res.ok) throw new Error('Error al guardar notas')
+      }
+      toast({ title: 'Notas guardadas correctamente' })
+      loadGrades()
+    } catch (error: any) {
+      toast({ title: 'Error al guardar', description: error.message, variant: 'destructive' })
+    } finally { setSavingGrades(false) }
+  }
+
   const metallicCardStyle = { background: 'linear-gradient(135deg, rgba(18,10,50,0.95), rgba(15,25,55,0.95), rgba(10,30,70,0.95))', border: '1px solid rgba(100,100,200,0.2)' }
   const metallicRedStyle = { background: 'linear-gradient(135deg, #8b0000, #dc143c, #ff4500)', boxShadow: '0 0 10px rgba(220,20,60,0.4)' }
 
@@ -308,6 +405,9 @@ export default function SuperAdminDashboard() {
           </TabsTrigger>
           <TabsTrigger value="years" className="text-white/60 text-xs" style={activeTab === 'years' ? { background: 'linear-gradient(135deg, #8b0000, #dc143c, #ff4500)', boxShadow: '0 0 10px rgba(220,20,60,0.4)', color: '#ffffff' } : undefined}>
             <Calendar className="h-3 w-3 mr-1" />Años
+          </TabsTrigger>
+          <TabsTrigger value="grades" className="text-white/60 text-xs" style={activeTab === 'grades' ? { background: 'linear-gradient(135deg, #00008b, #1e90ff, #00bfff)', boxShadow: '0 0 10px rgba(30,144,255,0.4)', color: '#ffffff' } : undefined}>
+            <BookOpen className="h-3 w-3 mr-1" />Calificar
           </TabsTrigger>
         </TabsList>
 
@@ -673,6 +773,145 @@ export default function SuperAdminDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
+        {/* GRADES TAB */}
+        <TabsContent value="grades">
+          <Card style={metallicCardStyle}>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle style={{ color: '#ffffff' }} className="text-lg">Calificar Notas</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Selection controls */}
+              <div className="flex flex-wrap gap-3 items-end">
+                <div>
+                  <Label style={{ color: 'rgba(255,255,255,0.6)' }} className="text-sm">Año</Label>
+                  <Select value={gradeYearId} onValueChange={(val) => { setGradeYearId(val); setGradeWeekId('') }}>
+                    <SelectTrigger className="w-36 text-sm" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.2)', color: '#ffffff' }}>
+                      <SelectValue placeholder="Año" />
+                    </SelectTrigger>
+                    <SelectContent style={{ background: '#0a0a2e', border: '1px solid rgba(100,100,200,0.3)' }}>
+                      {years.map(y => (
+                        <SelectItem key={y.id} value={y.id} style={{ color: '#ffffff' }}>{y.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label style={{ color: 'rgba(255,255,255,0.6)' }} className="text-sm">Semana</Label>
+                  <Select value={gradeWeekId} onValueChange={setGradeWeekId}>
+                    <SelectTrigger className="w-48 text-sm" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.2)', color: '#ffffff' }}>
+                      <SelectValue placeholder="Seleccionar semana" />
+                    </SelectTrigger>
+                    <SelectContent style={{ background: '#0a0a2e', border: '1px solid rgba(100,100,200,0.3)', maxHeight: '250px' }}>
+                      {(() => {
+                        const currentYear = years.find(y => y.id === gradeYearId)
+                        const weeks = currentYear?.weeks || []
+                        const monthsMap = new Map<string, typeof weeks>()
+                        weeks.forEach(w => {
+                          if (!monthsMap.has(w.month)) monthsMap.set(w.month, [])
+                          monthsMap.get(w.month)!.push(w)
+                        })
+                        return Array.from(monthsMap.entries()).map(([month, monthWeeks]) => (
+                          <div key={month}>
+                            <div className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,215,0,0.8)', background: 'rgba(255,255,255,0.05)' }}>{month}</div>
+                            {monthWeeks.map(w => (
+                              <SelectItem key={w.id} value={w.id} className="text-sm" style={{ color: '#ffffff' }}>Semana {w.weekNumber}</SelectItem>
+                            ))}
+                          </div>
+                        ))
+                      })()}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label style={{ color: 'rgba(255,255,255,0.6)' }} className="text-sm">Familia</Label>
+                  <Select value={gradeFamilyId} onValueChange={setGradeFamilyId}>
+                    <SelectTrigger className="w-44 text-sm" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.2)', color: '#ffffff' }}>
+                      <SelectValue placeholder="Seleccionar familia" />
+                    </SelectTrigger>
+                    <SelectContent style={{ background: '#0a0a2e', border: '1px solid rgba(100,100,200,0.3)' }}>
+                      {families.map(f => (
+                        <SelectItem key={f.id} value={f.id} style={{ color: '#ffffff' }}>{f.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {gradeFamilyId && gradeWeekId && (
+                  <Button onClick={handleSaveGrades} disabled={savingGrades} className="text-white border-0" style={{ background: 'linear-gradient(135deg, #00008b, #1e90ff, #00bfff)', boxShadow: '0 0 10px rgba(30,144,255,0.4)' }}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {savingGrades ? 'Guardando...' : 'Guardar Notas'}
+                  </Button>
+                )}
+              </div>
+
+              {/* Grade entry table */}
+              {gradeFamilyId && gradeWeekId && activeCriteria.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                        <th className="text-left py-2 px-2 font-medium" style={{ color: 'rgba(255,255,255,0.6)' }}>Estudiante</th>
+                        {activeCriteria.map(c => (
+                          <th key={c.id} className="text-center py-2 px-2 font-medium min-w-[100px]" style={{ color: 'rgba(255,255,255,0.6)' }}>{c.name}</th>
+                        ))}
+                        <th className="text-center py-2 px-2 font-medium w-10" style={{ color: 'rgba(255,215,0,0.7)' }}>
+                          <MessageSquare className="h-4 w-4 mx-auto" />
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(families.find(f => f.id === gradeFamilyId)?.students || []).map(student => (
+                        <tr key={student.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td className="py-3 px-2 font-medium whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.8)' }}>{student.name}</td>
+                          {activeCriteria.map(c => (
+                            <td key={c.id} className="py-2 px-1">
+                              <div className="flex flex-col items-center gap-1">
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="20"
+                                  step="0.5"
+                                  value={grades[student.id]?.[c.id]?.score ?? 0}
+                                  onChange={(e) => handleScoreChange(student.id, c.id, parseFloat(e.target.value) || 0)}
+                                  className="w-20 h-8 text-center text-sm mx-auto"
+                                  style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.2)', color: '#ffffff' }}
+                                />
+                                <Input
+                                  placeholder="Comentario"
+                                  value={grades[student.id]?.[c.id]?.comment ?? ''}
+                                  onChange={(e) => handleCommentChange(student.id, c.id, e.target.value)}
+                                  className="w-full h-6 text-[10px] mx-auto"
+                                  style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
+                                />
+                              </div>
+                            </td>
+                          ))}
+                          <td className="py-2 px-1">
+                            <Textarea
+                              placeholder="Comentario general..."
+                              value={generalComments[student.id] ?? ''}
+                              onChange={(e) => setGeneralComments(prev => ({...prev, [student.id]: e.target.value}))}
+                              className="w-32 h-16 text-xs"
+                              style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : !gradeFamilyId || !gradeWeekId ? (
+                <div className="py-8 text-center">
+                  <p style={{ color: 'rgba(255,255,255,0.5)' }}>Seleccione año, semana y familia para comenzar a calificar</p>
+                </div>
+              ) : (
+                <div className="py-8 text-center">
+                  <p style={{ color: 'rgba(255,255,255,0.5)' }}>No hay criterios activos para calificar</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
       </Tabs>
     </div>
   )
