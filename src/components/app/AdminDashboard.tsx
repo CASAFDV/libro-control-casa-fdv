@@ -215,7 +215,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Selection controls */}
-      <Card className="metallic-card">
+      <Card className="" style={{ background: 'linear-gradient(135deg, rgba(18,10,50,0.95), rgba(15,25,55,0.95), rgba(10,30,70,0.95))', border: '1px solid rgba(100,100,200,0.2)' }}>
         <CardContent className="py-4 flex flex-wrap gap-4 items-end">
           <div>
             <Label className="text-white/70 text-sm">Año Académico</Label>
@@ -223,7 +223,7 @@ export default function AdminDashboard() {
               <SelectTrigger className="w-40 bg-white/5 border-white/20 text-white text-sm mt-1">
                 <SelectValue placeholder="Seleccionar año" />
               </SelectTrigger>
-              <SelectContent className="bg-[#1a0a2e] border-white/20">
+              <SelectContent className="bg-[#1a0a2e] border-white/20" style={{ background: '#0a0a2e' }}>
                 {years.map(y => (
                   <SelectItem key={y.id} value={y.id} className="text-white focus:bg-white/10">{y.name}</SelectItem>
                 ))}
@@ -237,7 +237,7 @@ export default function AdminDashboard() {
               <SelectTrigger className="w-56 bg-white/5 border-white/20 text-white text-sm mt-1">
                 <SelectValue placeholder="Seleccionar semana" />
               </SelectTrigger>
-              <SelectContent className="bg-[#1a0a2e] border-white/20 max-h-60">
+              <SelectContent className="bg-[#1a0a2e] border-white/20 max-h-60" style={{ background: '#0a0a2e' }}>
                 {Array.from(monthsMap.entries()).map(([month, monthWeeks]) => (
                   <div key={month}>
                     <div className="px-2 py-1.5 text-xs font-semibold text-yellow-400/80 uppercase tracking-wider bg-white/5">{month}</div>
@@ -258,7 +258,7 @@ export default function AdminDashboard() {
               <SelectTrigger className="w-48 bg-white/5 border-white/20 text-white text-sm mt-1">
                 <SelectValue placeholder="Seleccionar familia" />
               </SelectTrigger>
-              <SelectContent className="bg-[#1a0a2e] border-white/20">
+              <SelectContent className="bg-[#1a0a2e] border-white/20" style={{ background: '#0a0a2e' }}>
                 {families.map(f => (
                   <SelectItem key={f.id} value={f.id} className="text-white focus:bg-white/10">{f.name}</SelectItem>
                 ))}
@@ -267,7 +267,7 @@ export default function AdminDashboard() {
           </div>
 
           {selectedFamilyId && selectedWeekId && (
-            <Button onClick={handleSave} disabled={saving} className="metallic-red text-white border-0 ml-auto">
+            <Button onClick={handleSave} disabled={saving} className="text-white border-0 ml-auto" style={{ background: 'linear-gradient(135deg, #8b0000, #dc143c, #ff4500)', boxShadow: '0 0 10px rgba(220,20,60,0.4)' }}>
               <Save className="h-4 w-4 mr-2" />
               {saving ? 'Guardando...' : 'Guardar Notas'}
             </Button>
@@ -277,9 +277,9 @@ export default function AdminDashboard() {
 
       {/* Grade entry table */}
       {selectedFamilyId && selectedWeekId && allowedCriteria.length > 0 ? (
-        <Card className="metallic-card">
+        <Card className="" style={{ background: 'linear-gradient(135deg, rgba(18,10,50,0.95), rgba(15,25,55,0.95), rgba(10,30,70,0.95))', border: '1px solid rgba(100,100,200,0.2)' }}>
           <CardHeader>
-            <CardTitle className="text-white text-lg">
+            <CardTitle className="text-white text-lg" style={{ color: '#ffffff' }}>
               Calificaciones - {families.find(f => f.id === selectedFamilyId)?.name}
             </CardTitle>
           </CardHeader>
@@ -313,7 +313,7 @@ export default function AdminDashboard() {
                               step="0.5"
                               value={grades[student.id]?.[c.id]?.score ?? 0}
                               onChange={(e) => handleScoreChange(student.id, c.id, parseFloat(e.target.value) || 0)}
-                              className="w-20 h-8 text-center bg-white/5 border-white/20 text-white text-sm mx-auto"
+                              className="w-20 h-8 text-center bg-white/5 border-white/20 text-white text-sm mx-auto" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.2)', color: '#ffffff' }}
                             />
                             <Input
                               placeholder="Comentario"
@@ -340,14 +340,14 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       ) : selectedFamilyId && selectedWeekId ? (
-        <Card className="metallic-card">
+        <Card className="" style={{ background: 'linear-gradient(135deg, rgba(18,10,50,0.95), rgba(15,25,55,0.95), rgba(10,30,70,0.95))', border: '1px solid rgba(100,100,200,0.2)' }}>
           <CardContent className="py-12 text-center">
             <p className="text-white/50">No tiene criterios asignados para calificar</p>
             <p className="text-xs text-white/30 mt-1">Contacte al Super Administrador</p>
           </CardContent>
         </Card>
       ) : (
-        <Card className="metallic-card">
+        <Card className="" style={{ background: 'linear-gradient(135deg, rgba(18,10,50,0.95), rgba(15,25,55,0.95), rgba(10,30,70,0.95))', border: '1px solid rgba(100,100,200,0.2)' }}>
           <CardContent className="py-12 text-center">
             <p className="text-white/50">Seleccione año, semana y familia para comenzar</p>
           </CardContent>

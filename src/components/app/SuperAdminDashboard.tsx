@@ -257,6 +257,9 @@ export default function SuperAdminDashboard() {
 
   const activeCriteria = criteria.filter(c => c.isActive)
 
+  const metallicCardStyle = { background: 'linear-gradient(135deg, rgba(18,10,50,0.95), rgba(15,25,55,0.95), rgba(10,30,70,0.95))', border: '1px solid rgba(100,100,200,0.2)' }
+  const metallicRedStyle = { background: 'linear-gradient(135deg, #8b0000, #dc143c, #ff4500)', boxShadow: '0 0 10px rgba(220,20,60,0.4)' }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -281,7 +284,8 @@ export default function SuperAdminDashboard() {
               toast({ title: 'Error', description: data.error, variant: 'destructive' })
             }
           }}
-          className="metallic-yellow text-black border-0 text-sm"
+          className="border-0 text-sm"
+          style={{ background: 'linear-gradient(135deg, #b8860b, #ffd700, #ffed4a)', color: '#000000', boxShadow: '0 0 10px rgba(255,215,0,0.4)' }}
           size="sm"
         >
           Inicializar BD
@@ -290,33 +294,33 @@ export default function SuperAdminDashboard() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-white/5 border border-white/10 flex flex-wrap h-auto gap-1 p-1">
-          <TabsTrigger value="families" className="data-[state=active]:metallic-red data-[state=active]:text-white text-white/60 text-xs">
+          <TabsTrigger value="families" className="text-white/60 text-xs" style={activeTab === 'families' ? { background: 'linear-gradient(135deg, #8b0000, #dc143c, #ff4500)', boxShadow: '0 0 10px rgba(220,20,60,0.4)', color: '#ffffff' } : undefined}>
             <Users className="h-3 w-3 mr-1" />Familias
           </TabsTrigger>
-          <TabsTrigger value="students" className="data-[state=active]:metallic-red data-[state=active]:text-white text-white/60 text-xs">
+          <TabsTrigger value="students" className="text-white/60 text-xs" style={activeTab === 'students' ? { background: 'linear-gradient(135deg, #8b0000, #dc143c, #ff4500)', boxShadow: '0 0 10px rgba(220,20,60,0.4)', color: '#ffffff' } : undefined}>
             <UserPlus className="h-3 w-3 mr-1" />Estudiantes
           </TabsTrigger>
-          <TabsTrigger value="criteria" className="data-[state=active]:metallic-red data-[state=active]:text-white text-white/60 text-xs">
+          <TabsTrigger value="criteria" className="text-white/60 text-xs" style={activeTab === 'criteria' ? { background: 'linear-gradient(135deg, #8b0000, #dc143c, #ff4500)', boxShadow: '0 0 10px rgba(220,20,60,0.4)', color: '#ffffff' } : undefined}>
             <BookOpen className="h-3 w-3 mr-1" />Criterios
           </TabsTrigger>
-          <TabsTrigger value="users" className="data-[state=active]:metallic-red data-[state=active]:text-white text-white/60 text-xs">
+          <TabsTrigger value="users" className="text-white/60 text-xs" style={activeTab === 'users' ? { background: 'linear-gradient(135deg, #8b0000, #dc143c, #ff4500)', boxShadow: '0 0 10px rgba(220,20,60,0.4)', color: '#ffffff' } : undefined}>
             <Shield className="h-3 w-3 mr-1" />Admins
           </TabsTrigger>
-          <TabsTrigger value="years" className="data-[state=active]:metallic-red data-[state=active]:text-white text-white/60 text-xs">
+          <TabsTrigger value="years" className="text-white/60 text-xs" style={activeTab === 'years' ? { background: 'linear-gradient(135deg, #8b0000, #dc143c, #ff4500)', boxShadow: '0 0 10px rgba(220,20,60,0.4)', color: '#ffffff' } : undefined}>
             <Calendar className="h-3 w-3 mr-1" />Años
           </TabsTrigger>
         </TabsList>
 
         {/* FAMILIES TAB */}
         <TabsContent value="families">
-          <Card className="metallic-card">
+          <Card style={metallicCardStyle}>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-white">Familias</CardTitle>
+              <CardTitle className="text-white" style={{ color: '#ffffff' }}>Familias</CardTitle>
               <Dialog open={familyDialog.open} onOpenChange={(open) => setFamilyDialog({ open, mode: 'create' })}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="metallic-red text-white border-0"><Plus className="h-4 w-4 mr-1" />Nueva</Button>
+                  <Button size="sm" className="text-white border-0" style={metallicRedStyle}><Plus className="h-4 w-4 mr-1" />Nueva</Button>
                 </DialogTrigger>
-                <DialogContent className="bg-[#1a0a2e] border-white/20 text-white">
+                <DialogContent className="border-white/20 text-white" style={{ background: '#0a0a2e' }}>
                   <DialogHeader>
                     <DialogTitle>{familyDialog.mode === 'create' ? 'Nueva Familia' : 'Editar Familia'}</DialogTitle>
                   </DialogHeader>
@@ -332,7 +336,7 @@ export default function SuperAdminDashboard() {
                         <Input value={familyColor} onChange={e => setFamilyColor(e.target.value)} className="bg-white/5 border-white/20 text-white flex-1" />
                       </div>
                     </div>
-                    <Button onClick={saveFamily} className="w-full metallic-red text-white border-0">Guardar</Button>
+                    <Button onClick={saveFamily} className="w-full text-white border-0" style={metallicRedStyle}>Guardar</Button>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -373,14 +377,14 @@ export default function SuperAdminDashboard() {
 
         {/* STUDENTS TAB */}
         <TabsContent value="students">
-          <Card className="metallic-card">
+          <Card style={metallicCardStyle}>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-white">Estudiantes</CardTitle>
+              <CardTitle className="text-white" style={{ color: '#ffffff' }}>Estudiantes</CardTitle>
               <Dialog open={studentDialog.open} onOpenChange={(open) => setStudentDialog({ open, mode: 'create' })}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="metallic-red text-white border-0"><Plus className="h-4 w-4 mr-1" />Nuevo</Button>
+                  <Button size="sm" className="text-white border-0" style={metallicRedStyle}><Plus className="h-4 w-4 mr-1" />Nuevo</Button>
                 </DialogTrigger>
-                <DialogContent className="bg-[#1a0a2e] border-white/20 text-white">
+                <DialogContent className="border-white/20 text-white" style={{ background: '#0a0a2e' }}>
                   <DialogHeader>
                     <DialogTitle>{studentDialog.mode === 'create' ? 'Nuevo Estudiante' : 'Editar Estudiante'}</DialogTitle>
                   </DialogHeader>
@@ -395,14 +399,14 @@ export default function SuperAdminDashboard() {
                         <SelectTrigger className="bg-white/5 border-white/20 text-white">
                           <SelectValue placeholder="Seleccionar familia" />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#1a0a2e] border-white/20">
+                        <SelectContent className="border-white/20" style={{ background: '#0a0a2e' }}>
                           {families.map(f => (
                             <SelectItem key={f.id} value={f.id} className="text-white focus:bg-white/10">{f.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <Button onClick={saveStudent} className="w-full metallic-red text-white border-0">Guardar</Button>
+                    <Button onClick={saveStudent} className="w-full text-white border-0" style={metallicRedStyle}>Guardar</Button>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -445,16 +449,16 @@ export default function SuperAdminDashboard() {
 
         {/* CRITERIA TAB */}
         <TabsContent value="criteria">
-          <Card className="metallic-card">
+          <Card style={metallicCardStyle}>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-white">Criterios de Evaluación ({activeCriteria.length}/12 activos)</CardTitle>
+              <CardTitle className="text-white" style={{ color: '#ffffff' }}>Criterios de Evaluación ({activeCriteria.length}/12 activos)</CardTitle>
               <Dialog open={criteriaDialog.open} onOpenChange={(open) => setCriteriaDialog({ open, mode: 'create' })}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="metallic-red text-white border-0" disabled={activeCriteria.length >= 12}>
+                  <Button size="sm" className="text-white border-0" style={metallicRedStyle} disabled={activeCriteria.length >= 12}>
                     <Plus className="h-4 w-4 mr-1" />Nuevo
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-[#1a0a2e] border-white/20 text-white">
+                <DialogContent className="border-white/20 text-white" style={{ background: '#0a0a2e' }}>
                   <DialogHeader>
                     <DialogTitle>{criteriaDialog.mode === 'create' ? 'Nuevo Criterio' : 'Editar Criterio'}</DialogTitle>
                   </DialogHeader>
@@ -463,7 +467,7 @@ export default function SuperAdminDashboard() {
                       <Label className="text-white/70">Nombre</Label>
                       <Input value={criteriaName} onChange={e => setCriteriaName(e.target.value)} className="bg-white/5 border-white/20 text-white" />
                     </div>
-                    <Button onClick={saveCriteria} className="w-full metallic-red text-white border-0">Guardar</Button>
+                    <Button onClick={saveCriteria} className="w-full text-white border-0" style={metallicRedStyle}>Guardar</Button>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -499,14 +503,14 @@ export default function SuperAdminDashboard() {
 
         {/* USERS TAB */}
         <TabsContent value="users">
-          <Card className="metallic-card">
+          <Card style={metallicCardStyle}>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-white">Administradores</CardTitle>
+              <CardTitle className="text-white" style={{ color: '#ffffff' }}>Administradores</CardTitle>
               <Dialog open={userDialog.open} onOpenChange={(open) => { setUserDialog({ open, mode: 'create' }); setUserForm({ username: '', password: '', name: '', role: 'ADMIN', criteriaIds: [] }) }}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="metallic-red text-white border-0"><Plus className="h-4 w-4 mr-1" />Nuevo</Button>
+                  <Button size="sm" className="text-white border-0" style={metallicRedStyle}><Plus className="h-4 w-4 mr-1" />Nuevo</Button>
                 </DialogTrigger>
-                <DialogContent className="bg-[#1a0a2e] border-white/20 text-white max-h-[80vh] overflow-y-auto">
+                <DialogContent className="border-white/20 text-white max-h-[80vh] overflow-y-auto" style={{ background: '#0a0a2e' }}>
                   <DialogHeader>
                     <DialogTitle>{userDialog.mode === 'create' ? 'Nuevo Administrador' : 'Editar Administrador'}</DialogTitle>
                   </DialogHeader>
@@ -529,7 +533,7 @@ export default function SuperAdminDashboard() {
                         <SelectTrigger className="bg-white/5 border-white/20 text-white">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#1a0a2e] border-white/20">
+                        <SelectContent className="border-white/20" style={{ background: '#0a0a2e' }}>
                           <SelectItem value="ADMIN" className="text-white focus:bg-white/10">Administrador</SelectItem>
                           <SelectItem value="SUPER_ADMIN" className="text-white focus:bg-white/10">Super Administrador</SelectItem>
                         </SelectContent>
@@ -559,7 +563,7 @@ export default function SuperAdminDashboard() {
                         </div>
                       </div>
                     )}
-                    <Button onClick={saveUser} className="w-full metallic-red text-white border-0">Guardar</Button>
+                    <Button onClick={saveUser} className="w-full text-white border-0" style={metallicRedStyle}>Guardar</Button>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -607,14 +611,14 @@ export default function SuperAdminDashboard() {
 
         {/* YEARS TAB */}
         <TabsContent value="years">
-          <Card className="metallic-card">
+          <Card style={metallicCardStyle}>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-white">Años Académicos</CardTitle>
+              <CardTitle className="text-white" style={{ color: '#ffffff' }}>Años Académicos</CardTitle>
               <Dialog open={yearDialog.open} onOpenChange={(open) => setYearDialog({ open, mode: 'create' })}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="metallic-red text-white border-0"><Plus className="h-4 w-4 mr-1" />Nuevo</Button>
+                  <Button size="sm" className="text-white border-0" style={metallicRedStyle}><Plus className="h-4 w-4 mr-1" />Nuevo</Button>
                 </DialogTrigger>
-                <DialogContent className="bg-[#1a0a2e] border-white/20 text-white">
+                <DialogContent className="border-white/20 text-white" style={{ background: '#0a0a2e' }}>
                   <DialogHeader>
                     <DialogTitle>{yearDialog.mode === 'create' ? 'Nuevo Año Académico' : 'Editar Año'}</DialogTitle>
                   </DialogHeader>
@@ -635,7 +639,7 @@ export default function SuperAdminDashboard() {
                         </div>
                       </>
                     )}
-                    <Button onClick={saveYear} className="w-full metallic-red text-white border-0">Guardar</Button>
+                    <Button onClick={saveYear} className="w-full text-white border-0" style={metallicRedStyle}>Guardar</Button>
                   </div>
                 </DialogContent>
               </Dialog>

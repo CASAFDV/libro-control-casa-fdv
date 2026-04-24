@@ -27,6 +27,11 @@ interface AcademicYear {
   weeks: { id: string; month: string; weekNumber: number }[]
 }
 
+const cardStyle: React.CSSProperties = {
+  background: 'linear-gradient(135deg, rgba(18,10,50,0.95), rgba(15,25,55,0.95), rgba(10,30,70,0.95))',
+  border: '1px solid rgba(100,100,200,0.2)',
+}
+
 export default function MainRanking() {
   const { selectedWeekId, selectFamily, selectedAcademicYearId } = useAppStore()
   const [rankings, setRankings] = useState<FamilyRanking[]>([])
@@ -35,14 +40,11 @@ export default function MainRanking() {
   const [years, setYears] = useState<AcademicYear[]>([])
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchYears()
-  }, [])
+  useEffect(() => { fetchYears() }, [])
 
   const fetchYears = async () => {
     const res = await fetch('/api/years')
-    const data = await res.json()
-    setYears(data)
+    setYears(await res.json())
   }
 
   const fetchWeeklyRankings = useCallback(async () => {
@@ -70,29 +72,24 @@ export default function MainRanking() {
     }
   }, [selectedMonth, selectedAcademicYearId])
 
-  useEffect(() => {
-    fetchWeeklyRankings()
-  }, [fetchWeeklyRankings])
-
-  useEffect(() => {
-    fetchMonthlyRankings()
-  }, [fetchMonthlyRankings])
+  useEffect(() => { fetchWeeklyRankings() }, [fetchWeeklyRankings])
+  useEffect(() => { fetchMonthlyRankings() }, [fetchMonthlyRankings])
 
   const currentYear = years.find(y => y.id === selectedAcademicYearId)
   const months = [...new Set(currentYear?.weeks.map(w => w.month) || [])]
 
   const getMedalIcon = (rank: number) => {
-    if (rank === 1) return <Crown className="h-6 w-6 text-yellow-400" />
-    if (rank === 2) return <Medal className="h-6 w-6 text-gray-300" />
-    if (rank === 3) return <Award className="h-6 w-6 text-amber-600" />
-    return <span className="text-lg font-bold text-white/50">#{rank}</span>
+    if (rank === 1) return <Crown className="h-6 w-6" style={{ color: '#ffd700', filter: 'drop-shadow(0 0 6px rgba(255,215,0,0.6))' }} />
+    if (rank === 2) return <Medal className="h-6 w-6" style={{ color: '#c0c0c0', filter: 'drop-shadow(0 0 6px rgba(192,192,192,0.5))' }} />
+    if (rank === 3) return <Award className="h-6 w-6" style={{ color: '#cd7f32', filter: 'drop-shadow(0 0 6px rgba(205,127,50,0.5))' }} />
+    return <span className="text-lg font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>#{rank}</span>
   }
 
-  const getPodiumGlow = (rank: number) => {
-    if (rank === 1) return 'glow-yellow metallic-yellow'
-    if (rank === 2) return 'glow-blue'
-    if (rank === 3) return 'glow-red'
-    return ''
+  const getPodiumStyle = (rank: number): React.CSSProperties => {
+    if (rank === 1) return { background: 'linear-gradient(135deg, #b8860b, #ffd700, #ffed4a, #ffd700, #b8860b)', backgroundSize: '200% 200%', animation: 'shimmer 3s ease-in-out infinite', boxShadow: '0 0 20px rgba(255,215,0,0.5), 0 0 40px rgba(255,215,0,0.2)' }
+    if (rank === 2) return { background: 'linear-gradient(135deg, #00008b, #1e90ff, #00bfff, #1e90ff, #00008b)', backgroundSize: '200% 200%', animation: 'shimmer 3s ease-in-out infinite', boxShadow: '0 0 15px rgba(30,144,255,0.5), 0 0 30px rgba(30,144,255,0.2)' }
+    if (rank === 3) return { background: 'linear-gradient(135deg, #8b0000, #dc143c, #ff4500, #dc143c, #8b0000)', backgroundSize: '200% 200%', animation: 'shimmer 3s ease-in-out infinite', boxShadow: '0 0 15px rgba(220,20,60,0.5), 0 0 30px rgba(220,20,60,0.2)' }
+    return {}
   }
 
   return (
@@ -100,8 +97,8 @@ export default function MainRanking() {
       {/* Week Selector */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-white/90 flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-400" />
+          <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'rgba(255,255,255,0.9)' }}>
+            <Trophy className="h-5 w-5" style={{ color: '#ffd700', filter: 'drop-shadow(0 0 6px rgba(255,215,0,0.5))' }} />
             Rankings
           </h2>
         </div>
@@ -109,11 +106,19 @@ export default function MainRanking() {
       </div>
 
       <Tabs defaultValue="weekly" className="w-full">
-        <TabsList className="bg-white/5 border border-white/10">
-          <TabsTrigger value="weekly" className="data-[state=active]:metallic-red data-[state=active]:text-white text-white/60">
+        <TabsList style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <TabsTrigger
+            value="weekly"
+            className="data-[state=active]:text-white"
+            style={{ color: 'rgba(255,255,255,0.6)' }}
+          >
             Ranking Semanal
           </TabsTrigger>
-          <TabsTrigger value="monthly" className="data-[state=active]:metallic-blue data-[state=active]:text-white text-white/60">
+          <TabsTrigger
+            value="monthly"
+            className="data-[state=active]:text-white"
+            style={{ color: 'rgba(255,255,255,0.6)' }}
+          >
             Ranking Mensual
           </TabsTrigger>
         </TabsList>
@@ -122,40 +127,45 @@ export default function MainRanking() {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map(i => (
-                <div key={i} className="animate-pulse h-48 bg-white/5 rounded-xl" />
+                <div key={i} className="animate-pulse h-48 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)' }} />
               ))}
             </div>
           ) : rankings.length === 0 ? (
-            <Card className="metallic-card">
+            <Card style={cardStyle}>
               <CardContent className="py-12 text-center">
-                <Trophy className="h-12 w-12 text-white/20 mx-auto mb-3" />
-                <p className="text-white/50">No hay datos para esta semana</p>
-                <p className="text-xs text-white/30 mt-1">Seleccione una semana con calificaciones registradas</p>
+                <Trophy className="h-12 w-12 mx-auto mb-3" style={{ color: 'rgba(255,255,255,0.15)' }} />
+                <p style={{ color: 'rgba(255,255,255,0.5)' }}>No hay datos para esta semana</p>
+                <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Seleccione una semana con calificaciones registradas</p>
               </CardContent>
             </Card>
           ) : (
-            /* Top 3 Podium */
             <div className="mb-8">
-              <h3 className="text-sm font-medium text-yellow-400/70 uppercase tracking-wider mb-4 text-center">
+              <h3 className="text-sm font-medium uppercase tracking-wider mb-4 text-center" style={{ color: 'rgba(255,215,0,0.7)' }}>
                 Podio Semanal
               </h3>
+              {/* Top 3 Podium */}
               <div className="flex items-end justify-center gap-3 mb-6">
                 {rankings.slice(0, 3).map((family, idx) => {
-                  const positions = [1, 0, 2] // 2nd, 1st, 3rd
+                  const positions = [1, 0, 2]
                   const position = positions[idx]
-                  const height = position === 0 ? 'h-40' : position === 1 ? 'h-32' : 'h-24'
+                  const height = position === 0 ? '160px' : position === 1 ? '128px' : '96px'
                   return (
                     <div key={family.familyId} className="flex flex-col items-center">
                       <div className="mb-2">{getMedalIcon(position + 1)}</div>
                       <div
-                        className={`${height} w-28 md:w-36 rounded-t-xl ${getPodiumGlow(position + 1)} 
-                          flex flex-col items-center justify-end pb-4 cursor-pointer transition-all hover:scale-105`}
+                        className="rounded-t-xl cursor-pointer transition-all hover:scale-105 flex flex-col items-center justify-end pb-4"
+                        style={{
+                          ...getPodiumStyle(position + 1),
+                          height,
+                          width: '120px',
+                          minWidth: '100px',
+                        }}
                         onClick={() => selectFamily(family.familyId)}
                       >
-                        <span className="text-white font-bold text-lg" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                        <span className="font-bold text-lg" style={{ color: '#ffffff', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
                           {family.average.toFixed(1)}
                         </span>
-                        <span className="text-white/80 text-xs font-medium mt-1 text-center px-2">
+                        <span className="text-xs font-medium mt-1 text-center px-2" style={{ color: 'rgba(255,255,255,0.85)' }}>
                           {family.familyName}
                         </span>
                       </div>
@@ -169,20 +179,23 @@ export default function MainRanking() {
                 {rankings.map(family => (
                   <Card
                     key={family.familyId}
-                    className="metallic-card cursor-pointer hover:bg-white/5 transition-all group"
+                    className="cursor-pointer transition-all group"
+                    style={{
+                      ...cardStyle,
+                    }}
                     onClick={() => selectFamily(family.familyId)}
                   >
                     <CardContent className="py-3 px-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                             style={{ background: family.familyColor, boxShadow: `0 0 10px ${family.familyColor}60` }}>
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                          style={{ background: family.familyColor, boxShadow: `0 0 10px ${family.familyColor}60` }}
+                        >
                           {family.rank}
                         </div>
                         <div>
-                          <p className="font-semibold text-white group-hover:text-yellow-300 transition-colors">
-                            {family.familyName}
-                          </p>
-                          <p className="text-xs text-white/40">{family.students.length} estudiante(s)</p>
+                          <p className="font-semibold" style={{ color: '#ffffff' }}>{family.familyName}</p>
+                          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{family.students.length} estudiante(s)</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -190,9 +203,9 @@ export default function MainRanking() {
                           <span className="text-lg font-bold" style={{ color: getScoreColor(family.average) }}>
                             {family.average.toFixed(1)}
                           </span>
-                          <span className="text-xs text-white/30"> /20</span>
+                          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}> /20</span>
                         </div>
-                        <ChevronRight className="h-4 w-4 text-white/30 group-hover:text-white/60 transition-colors" />
+                        <ChevronRight className="h-4 w-4" style={{ color: 'rgba(255,255,255,0.2)' }} />
                       </div>
                     </CardContent>
                   </Card>
@@ -208,11 +221,15 @@ export default function MainRanking() {
               <button
                 key={month}
                 onClick={() => setSelectedMonth(month)}
-                className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
-                  selectedMonth === month
-                    ? 'metallic-blue text-white'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
-                }`}
+                className="px-3 py-1.5 rounded-lg text-sm transition-all"
+                style={{
+                  background: selectedMonth === month
+                    ? 'linear-gradient(135deg, #00008b, #1e90ff, #00bfff, #1e90ff, #00008b)'
+                    : 'rgba(255,255,255,0.05)',
+                  color: selectedMonth === month ? '#ffffff' : 'rgba(255,255,255,0.6)',
+                  boxShadow: selectedMonth === month ? '0 0 10px rgba(30,144,255,0.4)' : 'none',
+                  border: selectedMonth === month ? '1px solid rgba(30,144,255,0.3)' : '1px solid transparent',
+                }}
               >
                 {month}
               </button>
@@ -220,33 +237,39 @@ export default function MainRanking() {
           </div>
 
           {!selectedMonth ? (
-            <Card className="metallic-card">
+            <Card style={cardStyle}>
               <CardContent className="py-12 text-center">
-                <p className="text-white/50">Seleccione un mes para ver el ranking</p>
+                <p style={{ color: 'rgba(255,255,255,0.5)' }}>Seleccione un mes para ver el ranking</p>
               </CardContent>
             </Card>
           ) : monthlyRankings.length === 0 ? (
-            <Card className="metallic-card">
+            <Card style={cardStyle}>
               <CardContent className="py-12 text-center">
-                <p className="text-white/50">No hay datos para este mes</p>
+                <p style={{ color: 'rgba(255,255,255,0.5)' }}>No hay datos para este mes</p>
               </CardContent>
             </Card>
           ) : (
             <div>
-              <h3 className="text-sm font-medium text-blue-400/70 uppercase tracking-wider mb-4 text-center">
+              <h3 className="text-sm font-medium uppercase tracking-wider mb-4 text-center" style={{ color: 'rgba(30,144,255,0.7)' }}>
                 Familia Más Consagrada - {selectedMonth}
               </h3>
               {/* Top 3 Monthly */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {monthlyRankings.slice(0, 3).map((family, idx) => (
-                  <Card key={family.familyId} className={`metallic-card ${idx === 0 ? 'ring-2 ring-yellow-400/50' : ''}`}>
+                  <Card
+                    key={family.familyId}
+                    style={{
+                      ...cardStyle,
+                      ...(idx === 0 ? { border: '2px solid rgba(255,215,0,0.4)', boxShadow: '0 0 20px rgba(255,215,0,0.15)' } : {}),
+                    }}
+                  >
                     <CardContent className="py-6 text-center">
                       <div className="flex justify-center mb-3">{getMedalIcon(idx + 1)}</div>
-                      <p className="font-bold text-white text-lg">{family.familyName}</p>
-                      <p className="text-2xl font-bold mt-2" style={{ color: getScoreColor(family.average) }}>
+                      <p className="font-bold text-lg" style={{ color: '#ffffff' }}>{family.familyName}</p>
+                      <p className="text-2xl font-bold mt-2" style={{ color: getScoreColor(family.average), textShadow: `0 0 15px ${getScoreColor(family.average)}40` }}>
                         {family.average.toFixed(1)}
                       </p>
-                      <p className="text-xs text-white/40 mt-1">puntos promedio</p>
+                      <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>puntos promedio</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -257,25 +280,28 @@ export default function MainRanking() {
                 {monthlyRankings.map(family => (
                   <Card
                     key={family.familyId}
-                    className="metallic-card cursor-pointer hover:bg-white/5 transition-all group"
+                    className="cursor-pointer transition-all"
+                    style={cardStyle}
                     onClick={() => selectFamily(family.familyId)}
                   >
                     <CardContent className="py-3 px-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                             style={{ background: family.familyColor }}>
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                          style={{ background: family.familyColor }}
+                        >
                           {family.rank}
                         </div>
                         <div>
-                          <p className="font-semibold text-white">{family.familyName}</p>
-                          <p className="text-xs text-white/40">{family.students.length} estudiante(s)</p>
+                          <p className="font-semibold" style={{ color: '#ffffff' }}>{family.familyName}</p>
+                          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{family.students.length} estudiante(s)</p>
                         </div>
                       </div>
                       <div className="text-right">
                         <span className="text-lg font-bold" style={{ color: getScoreColor(family.average) }}>
                           {family.average.toFixed(1)}
                         </span>
-                        <span className="text-xs text-white/30"> /20</span>
+                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}> /20</span>
                       </div>
                     </CardContent>
                   </Card>
