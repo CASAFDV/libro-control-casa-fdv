@@ -3,6 +3,9 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
+# Install OpenSSL and other build dependencies
+RUN apt-get update -qq && apt-get install -y -qq openssl libssl3 && rm -rf /var/lib/apt/lists/*
+
 # Install dependencies
 COPY package.json bun.lock ./
 RUN npm install --legacy-peer-deps
@@ -20,6 +23,9 @@ RUN npm run build
 FROM node:20-slim AS runner
 
 WORKDIR /app
+
+# Install OpenSSL for Prisma runtime + SQLite tools
+RUN apt-get update -qq && apt-get install -y -qq openssl libssl3 && rm -rf /var/lib/apt/lists/*
 
 # Set production environment
 ENV NODE_ENV=production
