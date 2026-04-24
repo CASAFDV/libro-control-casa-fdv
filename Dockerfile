@@ -1,0 +1,56 @@
+# ---- Build Stage ----
+FROM node:20-slim AS builder
+
+WORKDIR /app
+
+# Install dependencies
+COPY package.json bun.lock ./
+RUN npm install --legacy-peer-deps
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Build Next.js (standalone output)
+RUN npm run build
+
+# ---- Production Stage ----
+FROM node:20-slim AS runner
+
+WORKDIR /app
+
+# Set production environment
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+ENV DATABASE_URL=file:/app/data/custom.db
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Copy standalone build output
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+# Copy Prisma schema and engine for runtime db push
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+
+# Copy startup script
+COPY --chown=nextjs:nodejs docker-start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+# Create data directory for SQLite (will be mounted as volume)
+RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data
+
+USER nextjs
+
+EXPOSE 3000
+
+CMD ["/app/start.sh"]

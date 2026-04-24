@@ -1,7 +1,8 @@
 import bcrypt from 'bcryptjs'
 import { SignJWT, jwtVerify } from 'jose'
 
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'libro-control-casa-fdv-secret-key-2026')
+const JWT_SECRET = process.env.JWT_SECRET || 'libro-control-casa-fdv-secret-key-2026'
+const SECRET = new TextEncoder().encode(JWT_SECRET)
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10)
