@@ -1,10 +1,10 @@
 # ---- Build Stage ----
-FROM node:20-slim AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install OpenSSL and other build dependencies
-RUN apt-get update -qq && apt-get install -y -qq openssl libssl3 && rm -rf /var/lib/apt/lists/*
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
 
 # Install dependencies
 COPY package.json bun.lock ./
@@ -20,12 +20,12 @@ RUN npx prisma generate
 RUN npm run build
 
 # ---- Production Stage ----
-FROM node:20-slim AS runner
+FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Install OpenSSL for Prisma runtime + SQLite tools
-RUN apt-get update -qq && apt-get install -y -qq openssl libssl3 && rm -rf /var/lib/apt/lists/*
+# Install OpenSSL for Prisma runtime
+RUN apk add --no-cache openssl
 
 # Set production environment
 ENV NODE_ENV=production
